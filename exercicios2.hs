@@ -15,7 +15,18 @@ sumup :: [Int] -> Int
 sumup [] = 0
 sumup (x : xs) = x + sumup xs
 
--- bsearch :: [Int] -> Int -> Bool
--- bsearch xs n = False
+-- Não é a melhor forma de fazer uma busca binaria.
+bsearch :: [Int] -> Int -> Bool
+bsearch [] n = False
+bsearch xs n = 
+    -- splitAt :: [int] -> int -> ([int], [int])
+    let (as, b:bs) = splitAt (length xs `div` 2) xs in
+        if b == n then
+            True
+        else
+            if b > n then
+                bsearch as n
+            else
+                bsearch bs n
 
 -- Pode usar o let ou o where
