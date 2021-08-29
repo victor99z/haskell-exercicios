@@ -1,0 +1,153 @@
+Lista de exercícios de unificação, questão 3.
+
+    [...] Para as seguintes expressões, indique se é possível unificar os
+    dois tipos ou não, e, se for, qual o unificador mais geral capaz de
+    tornar as expressões iguais:
+    
+        a) X ~ foo
+        b) bar ~ Y
+        c) foo() ~ foo()
+        d) foo() ~ bar()
+        e) color(apple, red) ~ color(apple, C)
+        f) list(a, b, C) ~ list(X)
+        g) X ~ cons(10, X)
+        h) append(nil, cons(10, nil)) ~ append(X, Y)
+        i) append(nil, cons(10, nil)) ~ append(X, cons(H, T))
+
+    Respostas:
+        a) Unifica: { X |-> foo }. Usamos a regra (LEFT).
+        b) Unifica: { Y | bar }. Usamos a regra (RIGHT).
+        c) Queremos unificar:
+
+                foo() ~ foo()
+        
+           Rapidamente verificamos que unifica. Aplicamos a regra (PRED):
+
+                     [a1, ..., an] ~ [b1, ..., bn] = s
+                ------------------------------------------- (PRED)
+                    x(a1, ..., an) ~ x(b1, ..., bn) = s
+                    ^                ^
+
+           Os nomes dos predicados são iguais em ambos os lados, e ambas
+           as listas estão vazias. A nossa hipótese é verificada com a
+           aplicação da regra (NIL):
+
+                --------------------- (NIL)
+                    [] ~ [] = {}
+
+           Portanto, o resultado é {}, embora já pudessemos ver isso visto
+           que ambos os lados eram iguais.
+
+        d) Queremos unificar:
+
+                foo() ~ bar()
+
+           A regra (PRED) falha aqui porque os nomes não são iguais; e, como
+           nenhuma outra regra cobre o caso de dois predicados, concluímos
+           que não unifica.
+
+        e) Queremos unificar:
+        
+                color(apple, red) ~ color(apple, C)
+
+           Com a aplicação da regra (PRED), notamos que precisamos unificar:
+
+                [apple, red] ~ [apple, C]
+
+           Imediatamente podemos usar a regra (CONS) para tentar unificar listas
+           de termos:
+
+                   x ~ y = s1    s1(xs) ~ s1(ys) = s2
+                ---------------------------------------- (CONS)
+                       (x:xs) ~ (y:ys) = s2 * s1
+        
+           Fazendo a aplicação disso:
+
+                1) Primeira hipótese, apple ~ apple = {}, usando a regra (ATOM).
+                2) Segunda hipótese, {}[red] ~ {}[C]; novamente usamos a regra
+                   (CONS), visto que ambos os lados possuem células.
+                   2.1) Primeira hipótese, red ~ C = { C |-> red }, usando (RIGHT).
+                   2.2) Segunda hipótese, { C |-> red }[] ~ { C |-> red }[], ou seja,
+                        [] ~ [] = {} usando a regra (NIL).
+                   2.3) Compondo os dois resultados, {} * { C |-> red } =
+                                                     { C |-> {}red } =
+                                                     { C |-> red }
+                3) Compondo os resultados, { C |-> red } * {} =
+                                           { C |-> red }
+        
+           Portanto, temos a solução: color(apple, red) ~ color(apple, C) =
+                                            { C |-> red }
+        
+        f) Queremos unificar:
+        
+                list(a, b, C) ~ list(X)
+
+           Para unificar isso, através da regra (PRED), precisamos unificar:
+
+                [a, b, C] ~ [X]
+
+           Aplicamos a regra (CONS), como a seguir:
+                1) a ~ X = { X |-> a }, usando a regra (RIGHT)
+                2) { X |-> a }[b, C] ~ { X |-> a }[], ou seja,
+                   [b, C] ~ []... opa! Nem a regra (CONS) e nem a regra (NIL)
+                   se aplica aqui! Essa hipótese falha!
+                3) Como a segunda hipótese falhou, a regra (CONS) falhou.
+
+           A regra (CONS) acima falha e não há outra aplicável: portanto,
+           não é possível unificar. Isso sempre acontecerá quando tivermos
+           predicados com tamanhos diferentes.
+
+        g) Queremos unificar:
+
+                X ~ cons(10, X)
+
+           Idealmente gostaríamos de aplicar a regra (LEFT) aqui, vista que é a
+           única aplicável. Porém, a variável X aparece livre na direita, e a
+           regra (LEFT) não pode ser usada pois falha na sua hipótese. Portanto,
+           os termos não unificam.
+        
+        h) Queremos unificar:
+
+                append(nil, cons(10, nil)) ~ append(X, Y)
+
+           Aplicamos a regra (PRED), visto que o nome "append" aparece em ambos os
+           lados. Temos que unificar agora:
+
+                [nil, cons(10, nil)] ~ [X, Y]
+
+           Aplicamos a regra (CONS), visto que temos duas células:
+                1) Primeira hipótese: nil ~ X = { X |-> nil }, usando (RIGHT).
+                2) Segunda hipótese, usando o resultado da primeira:
+                        { X |-> nil }[cons(10, nil)] ~ { X |-> nil }[Y] =
+                        [cons(10, nil)] = [Y]
+                   Novamente tentamos a regra (CONS).
+                   2.1) cons(10, nil) ~ Y = { Y |-> cons(10, nil) }, usando a
+                        regra (RIGHT).
+                   2.2) { Y |-> ... }[] ~ { Y |-> ... }[] =
+                        [] ~ [] = {}, usando a regra (NIL)
+                   2.3) Compondo as substituições temos { Y |-> cons(10, nil) }
+                3) Compondo as substituições, temos { Y |-> cons(10, nil), X |-> nil }
+        
+           Portanto, nossos termos unificam.
+        
+        i) Queremos unificar:
+
+                append(nil, cons(10, nil)) ~ append(X, cons(H, T))
+
+           Aplicamos (PRED), que tem como hipótese (e solução):
+
+                [nil, cons(10, nil)] ~ [X, cons(H, T)]
+
+           Aplicamos (CONS):
+                1) nil ~ X = { X |-> nil }, usando (RIGHT)
+                2) { X |-> ...}[cons(10, nil)] ~ { X |-> ... }[cons(H, T)] =
+                   [cons(10, nil)] ~ [cons(H, T)]... podemos aplicar novamente
+                   a regra (CONS).
+                   2.1) cons(10, nil) ~ cons(H, T)... sabemos que os termos
+                        unificam, aplicando, em ordem: (PRED), (CONS), (RIGHT),
+                        (CONS), (RIGHT), e (NIL), retornando { T |-> nil, H |-> 10 }.
+                   2.2) [] ~ [] = {}, usando (NIL).
+                   2.3) Compondo os resultados tempos { T |-> nil, H |-> 10 }.
+                3) Compondo os resultados, temos { T |-> nil, H |-> 10, X -> nil }.
+
+           Portanto, os dois termos unificam.
